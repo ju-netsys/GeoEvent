@@ -1,6 +1,11 @@
 package fr.itii.geoevent_kotlin.p3
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -17,6 +22,7 @@ class OsmMapService(private val context: Context) : MapService {
     private lateinit var mapView: MapView
     private var mapClickListener: ((Double, Double, Float, Float) -> Unit)? = null
     private var markerClickListener: ((String, String, String, String, String, Float, Float) -> Unit)? = null
+    private var myLocationMarker: Marker? = null
 
     private data class MarkerMeta(
         val description: String,
@@ -99,8 +105,41 @@ class OsmMapService(private val context: Context) : MapService {
 
     override fun clearMarkers() {
         markerMeta.clear()
-        mapView.overlays.removeAll { it is Marker }
+        mapView.overlays.removeAll { it is Marker && it !== myLocationMarker }
         mapView.invalidate()
+    }
+
+    override fun updateMyLocation(lat: Double, lon: Double) {
+        val pos = GeoPoint(lat, lon)
+        val existing = myLocationMarker
+        if (existing != null) {
+            existing.position = pos
+            mapView.invalidate()
+            return
+        }
+        val marker = Marker(mapView).apply {
+            position = pos
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+            icon = createEmojiIcon("\uD83E\uDD9B", 44)
+            infoWindow = null
+            setOnMarkerClickListener { _, _ -> true }
+        }
+        myLocationMarker = marker
+        mapView.overlays.add(marker)
+        mapView.invalidate()
+    }
+
+    private fun createEmojiIcon(emoji: String, sizeDp: Int): Drawable {
+        val size = (sizeDp * context.resources.displayMetrics.density).toInt()
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint().apply {
+            textSize = size * 0.82f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText(emoji, size / 2f, size * 0.88f, paint)
+        return BitmapDrawable(context.resources, bitmap)
     }
 
     override fun setOnMapClickListener(listener: (Double, Double, Float, Float) -> Unit) {

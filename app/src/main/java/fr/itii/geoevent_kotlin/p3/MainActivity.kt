@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val location = result.lastLocation ?: return
+            mapService.updateMyLocation(location.latitude, location.longitude)
             if (!hasCenteredOnUser) {
                 mapService.centerOn(location.latitude, location.longitude)
                 hasCenteredOnUser = true

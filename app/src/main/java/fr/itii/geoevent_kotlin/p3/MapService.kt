@@ -33,6 +33,8 @@ interface MapService {
     fun setOnMarkerClickListener(
         listener: (eventId: String, title: String, description: String, authorEmail: String, userId: String, x: Float, y: Float) -> Unit
     )
+
+    fun updateMyLocation(lat: Double, lon: Double)
 }
 
 data class MapState(
