@@ -9,6 +9,8 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -34,7 +36,12 @@ import fr.itii.geoevent_kotlin.map.osm.OsmMapService
 import fr.itii.geoevent_kotlin.ui.auth.LoginActivity
 import fr.itii.geoevent_kotlin.ui.common.UiState
 import fr.itii.geoevent_kotlin.ui.event.AddEventActivity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * Activité principale de l'application : affiche la carte OSM,
@@ -53,43 +60,46 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-
-    /** Interface cartographique — jamais osmdroid directement. */
     private lateinit var mapService: MapService
-
-    /** Client GPS Play Services. */
     private lateinit var fusedClient: FusedLocationProviderClient
 
     private val viewModel: MapViewModel by viewModels {
         MapViewModelFactory(FirestoreEventRepository(FirestoreDataSource()))
     }
 
-    /** Position et zoom sauvegardés lors d'une rotation/recréation. */
     private var savedMapState: MapState? = null
+
+    /**
+     * Vrai dès que la carte a été centrée une première fois sur la position GPS.
+     * Évite que chaque mise à jour GPS (toutes les 5s) recentre la carte pendant
+     * que l'utilisateur navigue.
+     * Remis à false dans [onPause] pour recentrer à la prochaine ouverture.
+     */
+    private var hasCenteredOnUser = false
 
     // -------------------------------------------------------------------------
     // Callback GPS
     // -------------------------------------------------------------------------
 
     /**
-     * Reçoit les mises à jour de position et centre la carte automatiquement.
+     * Reçoit les mises à jour de position.
+     * Ne centre la carte que lors du **premier** fix GPS de la session.
      */
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             result.lastLocation?.let { location ->
-                mapService.centerOn(location.latitude, location.longitude)
+                if (!hasCenteredOnUser) {
+                    mapService.centerOn(location.latitude, location.longitude)
+                    hasCenteredOnUser = true
+                }
             }
         }
     }
 
     // -------------------------------------------------------------------------
-    // Gestion des permissions (ActivityResultContracts)
+    // Permissions
     // -------------------------------------------------------------------------
 
-    /**
-     * Lance la demande de permissions et gère les 3 cas :
-     * accordé / refusé avec rationale / refusé définitivement.
-     */
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -101,10 +111,7 @@ class MainActivity : AppCompatActivity() {
             shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) -> {
                 showPermissionRationale()
             }
-            else -> {
-                // Refus définitif : rediriger vers les paramètres système
-                showPermissionSettings()
-            }
+            else -> showPermissionSettings()
         }
     }
 
@@ -115,7 +122,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Rediriger vers Login si l'utilisateur n'est pas authentifié
         if (FirebaseAuth.getInstance().currentUser == null) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -128,7 +134,6 @@ class MainActivity : AppCompatActivity() {
 
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Restaurer l'état de la carte après rotation
         savedMapState = savedInstanceState?.let {
             MapState(
                 latitude = it.getDouble(KEY_LAT, 48.8566),
@@ -139,30 +144,24 @@ class MainActivity : AppCompatActivity() {
 
         initMap()
         observeEvents()
+        initSearch()
 
         binding.fabAddEvent.setOnClickListener {
             startActivity(Intent(this, AddEventActivity::class.java))
         }
     }
 
-    /**
-     * Initialise [OsmMapService] (via [MapService]) et restaure l'état si disponible.
-     * Appelé une seule fois dans [onCreate].
-     */
     private fun initMap() {
         mapService = OsmMapService(this)
         mapService.showMap(binding.mapContainer)
         savedMapState?.let { mapService.restoreState(it) }
     }
 
-    /**
-     * Collecte le [UiState] du ViewModel et met à jour les marqueurs de la carte.
-     */
     private fun observeEvents() {
         lifecycleScope.launch {
             viewModel.eventsState.collect { state ->
                 when (state) {
-                    is UiState.Loading -> { /* Optionnel : afficher un indicateur de chargement */ }
+                    is UiState.Loading -> {}
                     is UiState.Success -> displayEvents(state.data)
                     is UiState.Error -> Toast.makeText(
                         this@MainActivity, state.message, Toast.LENGTH_SHORT
@@ -172,9 +171,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Efface les anciens marqueurs et place un marqueur par événement.
-     */
     private fun displayEvents(events: List<Event>) {
         mapService.clearMarkers()
         events.forEach { event ->
@@ -185,7 +181,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         mapService.onResume()
-        // Re-vérification nécessaire : les permissions peuvent être révoquées à chaud (Android 11+)
         checkAndRequestLocationPermission()
     }
 
@@ -193,6 +188,8 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         mapService.onPause()
         stopLocationUpdates()
+        // Permet de recentrer à la prochaine reprise
+        hasCenteredOnUser = false
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -204,12 +201,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     // -------------------------------------------------------------------------
-    // Localisation GPS
+    // GPS
     // -------------------------------------------------------------------------
 
-    /**
-     * Vérifie si la permission est accordée ; sinon lance le [permissionLauncher].
-     */
     private fun checkAndRequestLocationPermission() {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
         val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -225,10 +219,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Démarre les mises à jour GPS toutes les 5 secondes.
-     * La vérification de permission est obligatoire avant chaque appel.
-     */
     private fun startLocationUpdates() {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
         val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -238,15 +228,83 @@ class MainActivity : AppCompatActivity() {
         fusedClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
     }
 
-    /**
-     * Arrête les mises à jour GPS. Appelé dans [onPause] pour respecter le cycle de vie.
-     */
     private fun stopLocationUpdates() {
         fusedClient.removeLocationUpdates(locationCallback)
     }
 
     // -------------------------------------------------------------------------
-    // Dialogs de permission
+    // Recherche de lieux (Nominatim / OpenStreetMap)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Configure la barre de recherche.
+     * Déclenche [searchPlace] au clic sur le bouton ou à l'action "Search" du clavier.
+     */
+    private fun initSearch() {
+        binding.btnSearch.setOnClickListener {
+            val query = binding.etSearch.text.toString().trim()
+            if (query.isNotEmpty()) searchPlace(query)
+        }
+
+        binding.etSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val query = binding.etSearch.text.toString().trim()
+                if (query.isNotEmpty()) searchPlace(query)
+                true
+            } else false
+        }
+    }
+
+    /**
+     * Géocode [query] via l'API Nominatim (OpenStreetMap) et centre la carte sur le résultat.
+     *
+     * L'appel réseau s'effectue sur [Dispatchers.IO] pour ne pas bloquer le main thread.
+     * Nominatim impose un User-Agent valide — on utilise le packageName de l'app.
+     */
+    private fun searchPlace(query: String) {
+        hideKeyboard()
+        lifecycleScope.launch {
+            try {
+                val results = withContext(Dispatchers.IO) {
+                    val encodedQuery = Uri.encode(query)
+                    val url = URL("https://nominatim.openstreetmap.org/search?q=$encodedQuery&format=json&limit=1")
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.setRequestProperty("User-Agent", packageName)
+                    connection.connectTimeout = 5000
+                    connection.readTimeout = 5000
+                    val response = connection.inputStream.bufferedReader().readText()
+                    connection.disconnect()
+                    JSONArray(response)
+                }
+
+                if (results.length() > 0) {
+                    val place = results.getJSONObject(0)
+                    val lat = place.getDouble("lat")
+                    val lon = place.getDouble("lon")
+                    val displayName = place.getString("display_name")
+                    mapService.centerOn(lat, lon, 14.0)
+                    // Afficher uniquement la première partie du nom (ville/pays)
+                    Toast.makeText(
+                        this@MainActivity,
+                        displayName.substringBefore(","),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    Toast.makeText(this@MainActivity, R.string.search_no_result, Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, R.string.search_error, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(binding.etSearch.windowToken, 0)
+    }
+
+    // -------------------------------------------------------------------------
+    // Dialogs permission
     // -------------------------------------------------------------------------
 
     private fun showPermissionRationale() {
@@ -281,7 +339,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // -------------------------------------------------------------------------
-    // Menu (déconnexion)
+    // Menu
     // -------------------------------------------------------------------------
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

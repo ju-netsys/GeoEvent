@@ -36,6 +36,11 @@
     <string name="delete_event_confirm">Voulez-vous vraiment supprimer cet événement ?</string>
     <string name="delete">Supprimer</string>
 
+    <!-- Search -->
+    <string name="search_place">Rechercher un lieu…</string>
+    <string name="search_no_result">Aucun résultat trouvé</string>
+    <string name="search_error">Erreur lors de la recherche</string>
+
     <!-- Errors -->
     <string name="error_email_required">L\'email est requis</string>
     <string name="error_password_required">Le mot de passe est requis</string>
