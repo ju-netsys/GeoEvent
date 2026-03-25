@@ -39,7 +39,6 @@ import fr.itii.geoevent_kotlin.ui.event.AddEventActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -256,39 +255,49 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Géocode [query] via l'API Nominatim (OpenStreetMap) et centre la carte sur le résultat.
+     * Géocode un code postal via l'API zippopotam.us et centre la carte sur le résultat.
+     *
+     * Format accepté :
+     * - "75001"       → pays par défaut : France (fr)
+     * - "us/10001"    → pays explicite avant le "/"
      *
      * L'appel réseau s'effectue sur [Dispatchers.IO] pour ne pas bloquer le main thread.
-     * Nominatim impose un User-Agent valide — on utilise le packageName de l'app.
      */
     private fun searchPlace(query: String) {
         hideKeyboard()
         lifecycleScope.launch {
             try {
-                val results = withContext(Dispatchers.IO) {
-                    val encodedQuery = Uri.encode(query)
-                    val url = URL("https://nominatim.openstreetmap.org/search?q=$encodedQuery&format=json&limit=1")
-                    val connection = url.openConnection() as HttpURLConnection
-                    connection.setRequestProperty("User-Agent", packageName)
-                    connection.connectTimeout = 5000
-                    connection.readTimeout = 5000
-                    val response = connection.inputStream.bufferedReader().readText()
-                    connection.disconnect()
-                    JSONArray(response)
+                val (country, zip) = if (query.contains("/")) {
+                    val parts = query.split("/", limit = 2)
+                    parts[0].trim() to parts[1].trim()
+                } else {
+                    "fr" to query.trim()
                 }
 
-                if (results.length() > 0) {
-                    val place = results.getJSONObject(0)
-                    val lat = place.getDouble("lat")
-                    val lon = place.getDouble("lon")
-                    val displayName = place.getString("display_name")
-                    mapService.centerOn(lat, lon, 14.0)
-                    // Afficher uniquement la première partie du nom (ville/pays)
-                    Toast.makeText(
-                        this@MainActivity,
-                        displayName.substringBefore(","),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                val result = withContext(Dispatchers.IO) {
+                    val url = URL("https://api.zippopotam.us/$country/$zip")
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 5000
+                    connection.readTimeout = 5000
+                    if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                        val response = connection.inputStream.bufferedReader().readText()
+                        connection.disconnect()
+                        response
+                    } else {
+                        connection.disconnect()
+                        null
+                    }
+                }
+
+                if (result != null) {
+                    val json = org.json.JSONObject(result)
+                    val places = json.getJSONArray("places")
+                    val place = places.getJSONObject(0)
+                    val lat = place.getString("latitude").toDouble()
+                    val lon = place.getString("longitude").toDouble()
+                    val placeName = place.getString("place name")
+                    mapService.centerOn(lat, lon, 13.0)
+                    Toast.makeText(this@MainActivity, placeName, Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this@MainActivity, R.string.search_no_result, Toast.LENGTH_SHORT).show()
                 }
