@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
  * N'importe jamais Firebase directement pour les opérations sur les événements —
  * passe uniquement par [EventRepository].
  *
- * @param repository Dépôt injecté via [EventViewModelFactory].
+ * @param repository Dépôt injecté via [fr.itii.geoevent_kotlin.ui.common.ViewModelFactory].
  */
 class EventViewModel(private val repository: EventRepository) : ViewModel() {
 

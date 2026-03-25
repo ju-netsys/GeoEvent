@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Marqueur d'événement sur la carte — pin violet accord avec la charte GeoEvent.
+    Dimensions 32×48dp pour un rendu net à toutes les densités d'écran.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="48dp"
+    android:viewportWidth="32"
+    android:viewportHeight="48">
+
+    <!-- Corps du pin (goutte d'eau violette) -->
+    <path
+        android:fillColor="#7C57C9"
+        android:pathData="M16,1C9.37,1 4,6.37 4,13c0,9.5 12,34 12,34S28,22.5 28,13C28,6.37 22.63,1 16,1z" />
+
+    <!-- Ombre subtile en bas du pin -->
+    <path
+        android:fillColor="#5A3FA0"
+        android:pathData="M16,44C16,44 14,40 12,36C14,38 18,38 20,36C18,40 16,44 16,44z" />
+
+    <!-- Cercle blanc intérieur -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,8.5m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+
+    <!-- Point violet central -->
+    <path
+        android:fillColor="#7C57C9"
+        android:pathData="M16,8.5m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0" />
+
+</vector>

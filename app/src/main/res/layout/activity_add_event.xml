@@ -1,94 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/md_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilTitle"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        <!-- En-tête coloré -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/event_title">
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="?attr/colorPrimaryContainer">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etTitle"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapSentences" />
+                android:orientation="vertical"
+                android:padding="20dp">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/add_event_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnPrimaryContainer" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilDescription"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/add_event_subtitle"
+                    android:textSize="13sp"
+                    android:textColor="?attr/colorOnPrimaryContainer" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Carte formulaire -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/event_description">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="?attr/colorSurface">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDescription"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textMultiLine"
-                android:minLines="3" />
+                android:orientation="vertical"
+                android:padding="20dp">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilTitle"
+                    style="@style/Widget.GeoEvent.TextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:hint="@string/event_title">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilLatitude"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/latitude">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etLatitude"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal|numberSigned" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilDescription"
+                    style="@style/Widget.GeoEvent.TextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:hint="@string/event_description">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilLongitude"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:hint="@string/longitude">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine"
+                        android:minLines="3"
+                        android:gravity="top" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etLongitude"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal|numberSigned" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <!-- Séparateur GPS -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/gps_coordinates"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilLatitude"
+                        style="@style/Widget.GeoEvent.TextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:hint="@string/latitude">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etLatitude"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal|numberSigned" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilLongitude"
+                        style="@style/Widget.GeoEvent.TextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/longitude">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etLongitude"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal|numberSigned" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginBottom="8dp"
+            android:layout_marginTop="16dp"
             android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
+            style="@style/Widget.GeoEvent.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="@string/save" />
 
     </LinearLayout>
-
 </ScrollView>

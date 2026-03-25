@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bulle affichée au tap sur un marqueur existant — titre + bouton suppression -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="10dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="?attr/colorSurface">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="6dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_location"
+            android:contentDescription="@null"
+            app:tint="?attr/colorPrimary" />
+
+        <TextView
+            android:id="@+id/tvMarkerTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:maxWidth="180dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="?attr/colorOnSurface" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteMarker"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:contentDescription="@string/delete"
+            app:icon="@drawable/ic_delete"
+            app:iconTint="?attr/colorError" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

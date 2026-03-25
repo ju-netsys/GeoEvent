@@ -10,10 +10,10 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import fr.itii.geoevent_kotlin.R
 import fr.itii.geoevent_kotlin.data.model.Event
-import fr.itii.geoevent_kotlin.data.remote.FirestoreDataSource
-import fr.itii.geoevent_kotlin.data.repository.FirestoreEventRepository
 import fr.itii.geoevent_kotlin.databinding.ActivityEventDetailBinding
+import fr.itii.geoevent_kotlin.di.ServiceLocator
 import fr.itii.geoevent_kotlin.ui.common.UiState
+import fr.itii.geoevent_kotlin.ui.common.ViewModelFactory
 import kotlinx.coroutines.launch
 
 /**
@@ -27,7 +27,7 @@ class EventDetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityEventDetailBinding
 
     private val viewModel: EventViewModel by viewModels {
-        EventViewModelFactory(FirestoreEventRepository(FirestoreDataSource()))
+        ViewModelFactory { EventViewModel(ServiceLocator.eventRepository) }
     }
 
     private var event: Event? = null

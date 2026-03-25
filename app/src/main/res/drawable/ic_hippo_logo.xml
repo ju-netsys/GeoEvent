@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Logo hippopotame de GeoEvent — design plat, 96×96dp.
+    Cercle violet primaire + hippopotame blanc stylisé centré.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Cercle de fond violet -->
+    <path
+        android:fillColor="#7C57C9"
+        android:pathData="M4,48 A44,44,0,1,0,92,48 A44,44,0,1,0,4,48 Z" />
+
+    <!-- Oreille gauche (blanc) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,30 A8,8,0,1,0,34,30 A8,8,0,1,0,18,30 Z" />
+
+    <!-- Oreille droite (blanc) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,30 A8,8,0,1,0,78,30 A8,8,0,1,0,62,30 Z" />
+
+    <!-- Intérieur oreille gauche (violet clair) -->
+    <path
+        android:fillColor="#B39DDB"
+        android:pathData="M21,30 A5,5,0,1,0,31,30 A5,5,0,1,0,21,30 Z" />
+
+    <!-- Intérieur oreille droite (violet clair) -->
+    <path
+        android:fillColor="#B39DDB"
+        android:pathData="M65,30 A5,5,0,1,0,75,30 A5,5,0,1,0,65,30 Z" />
+
+    <!-- Tête (ovale blanc) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,52 A28,22,0,1,0,76,52 A28,22,0,1,0,20,52 Z" />
+
+    <!-- Museau (ovale violet très clair) -->
+    <path
+        android:fillColor="#EDE7F6"
+        android:pathData="M32,62 A16,10,0,1,0,64,62 A16,10,0,1,0,32,62 Z" />
+
+    <!-- Narine gauche -->
+    <path
+        android:fillColor="#7C57C9"
+        android:pathData="M36.5,62 A3.5,3,0,1,0,43.5,62 A3.5,3,0,1,0,36.5,62 Z" />
+
+    <!-- Narine droite -->
+    <path
+        android:fillColor="#7C57C9"
+        android:pathData="M52.5,62 A3.5,3,0,1,0,59.5,62 A3.5,3,0,1,0,52.5,62 Z" />
+
+    <!-- Œil gauche (violet) -->
+    <path
+        android:fillColor="#7C57C9"
+        android:pathData="M30,45 A4,4,0,1,0,38,45 A4,4,0,1,0,30,45 Z" />
+
+    <!-- Œil droit (violet) -->
+    <path
+        android:fillColor="#7C57C9"
+        android:pathData="M58,45 A4,4,0,1,0,66,45 A4,4,0,1,0,58,45 Z" />
+
+    <!-- Reflet œil gauche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M31.5,43 A1.5,1.5,0,1,0,34.5,43 A1.5,1.5,0,1,0,31.5,43 Z" />
+
+    <!-- Reflet œil droit -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M59.5,43 A1.5,1.5,0,1,0,62.5,43 A1.5,1.5,0,1,0,59.5,43 Z" />
+
+    <!-- Sourire (arc arrondi) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#9E7FD4"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M39,68 Q48,74 57,68" />
+
+</vector>

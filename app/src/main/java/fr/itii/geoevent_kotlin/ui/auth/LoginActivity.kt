@@ -67,6 +67,7 @@ class LoginActivity : AppCompatActivity() {
                         setLoading(false)
                         Toast.makeText(this@LoginActivity, state.message, Toast.LENGTH_LONG).show()
                     }
+                    null -> setLoading(false) // État initial : rien en cours
                 }
             }
         }

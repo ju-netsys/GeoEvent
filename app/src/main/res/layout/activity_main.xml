@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Layout de la carte principale.
-    - FrameLayout mapContainer : conteneur dans lequel OsmMapService injecte le MapView.
-    - FloatingActionButton : ouvre AddEventActivity.
-    - Toolbar : affiche le titre et le menu (déconnexion).
--->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,30 +8,95 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:elevation="0dp"
+        app:liftOnScroll="false">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="@string/app_name" />
+            app:titleTextAppearance="@style/TextAppearance.GeoEvent.Toolbar" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Conteneur de la carte OSM (rempli programmatiquement par OsmMapService) -->
+    <!-- Conteneur de la carte OSM (rempli par OsmMapService) -->
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <!-- Barre de recherche flottante — pill shape -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/searchCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="6dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="?attr/colorSurface">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="18dp"
+            android:paddingEnd="4dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_search"
+                app:tint="?attr/colorOnSurfaceVariant"
+                android:contentDescription="@null" />
+
+            <EditText
+                android:id="@+id/etSearch"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:background="@null"
+                android:hint="@string/search_place"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSearch"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/search_place"
+                app:icon="@drawable/ic_search"
+                app:iconTint="?attr/colorPrimary" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- FAB — ajouter un événement -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddEvent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_margin="20dp"
         android:contentDescription="@string/add_event"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        app:srcCompat="@drawable/ic_add"
+        app:tint="@color/md_on_primary"
+        app:backgroundTint="?attr/colorPrimary"
+        app:fabSize="normal"
+        app:rippleColor="@color/md_primary_container" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

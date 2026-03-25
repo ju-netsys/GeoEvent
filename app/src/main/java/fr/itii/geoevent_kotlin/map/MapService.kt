@@ -27,11 +27,13 @@ interface MapService {
 
     /**
      * Ajoute un marqueur sur la carte.
-     * @param lat   Latitude du marqueur.
-     * @param lon   Longitude du marqueur.
-     * @param title Libellé affiché au tap.
+     * @param lat     Latitude du marqueur.
+     * @param lon     Longitude du marqueur.
+     * @param title   Libellé de l'événement.
+     * @param eventId Identifiant Firestore de l'événement.
+     * @param userId  UID du propriétaire de l'événement.
      */
-    fun addMarker(lat: Double, lon: Double, title: String)
+    fun addMarker(lat: Double, lon: Double, title: String, eventId: String, userId: String)
 
     /** Supprime tous les marqueurs de la carte. */
     fun clearMarkers()
@@ -47,6 +49,18 @@ interface MapService {
 
     /** Restaure une position et un zoom précédemment sauvegardés. */
     fun restoreState(state: MapState)
+
+    /**
+     * Enregistre un callback appelé quand l'utilisateur tape sur la carte (zone vide).
+     * @param listener reçoit (latitude, longitude, x, y) en coordonnées relatives à la vue carte.
+     */
+    fun setOnMapClickListener(listener: (lat: Double, lon: Double, x: Float, y: Float) -> Unit)
+
+    /**
+     * Enregistre un callback appelé quand l'utilisateur tape sur un marqueur existant.
+     * @param listener reçoit (eventId, title, userId, x, y) — x/y en coordonnées fenêtre.
+     */
+    fun setOnMarkerClickListener(listener: (eventId: String, title: String, userId: String, x: Float, y: Float) -> Unit)
 }
 
 /**
