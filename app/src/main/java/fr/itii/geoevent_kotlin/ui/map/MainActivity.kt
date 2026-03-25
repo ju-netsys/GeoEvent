@@ -7,10 +7,14 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.PopupWindow
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -24,17 +28,18 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import fr.itii.geoevent_kotlin.R
 import fr.itii.geoevent_kotlin.data.model.Event
-import fr.itii.geoevent_kotlin.data.remote.FirestoreDataSource
-import fr.itii.geoevent_kotlin.data.repository.FirestoreEventRepository
 import fr.itii.geoevent_kotlin.databinding.ActivityMainBinding
+import fr.itii.geoevent_kotlin.di.ServiceLocator
 import fr.itii.geoevent_kotlin.map.MapService
 import fr.itii.geoevent_kotlin.map.MapState
 import fr.itii.geoevent_kotlin.map.osm.OsmMapService
 import fr.itii.geoevent_kotlin.ui.auth.LoginActivity
 import fr.itii.geoevent_kotlin.ui.common.UiState
+import fr.itii.geoevent_kotlin.ui.common.ViewModelFactory
 import fr.itii.geoevent_kotlin.ui.event.AddEventActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -61,9 +66,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var mapService: MapService
     private lateinit var fusedClient: FusedLocationProviderClient
+    private var mapPopup: PopupWindow? = null
+    private var markerPopup: PopupWindow? = null
 
     private val viewModel: MapViewModel by viewModels {
-        MapViewModelFactory(FirestoreEventRepository(FirestoreDataSource()))
+        ViewModelFactory { MapViewModel(ServiceLocator.eventRepository) }
     }
 
     private var savedMapState: MapState? = null
@@ -143,6 +150,7 @@ class MainActivity : AppCompatActivity() {
 
         initMap()
         observeEvents()
+        observeDeleteState()
         initSearch()
 
         binding.fabAddEvent.setOnClickListener {
@@ -154,6 +162,132 @@ class MainActivity : AppCompatActivity() {
         mapService = OsmMapService(this)
         mapService.showMap(binding.mapContainer)
         savedMapState?.let { mapService.restoreState(it) }
+
+        mapService.setOnMapClickListener { lat, lon, viewX, viewY ->
+            showMapPopup(lat, lon, viewX, viewY)
+        }
+
+        mapService.setOnMarkerClickListener { eventId, title, userId, viewX, viewY ->
+            showMarkerPopup(eventId, title, userId, viewX, viewY)
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Bubble popup au tap sur la carte
+    // -------------------------------------------------------------------------
+
+    /**
+     * Affiche une bulle contextuelle avec les coordonnées du tap
+     * et un bouton "+" pour créer un événement à cet endroit.
+     *
+     * @param viewX / viewY : coordonnées relatives à la vue carte.
+     */
+    private fun showMapPopup(lat: Double, lon: Double, viewX: Float, viewY: Float) {
+        mapPopup?.dismiss()
+
+        val popupView = layoutInflater.inflate(R.layout.popup_map_click, null)
+        popupView.findViewById<TextView>(R.id.tvCoordinates).text =
+            getString(R.string.coordinates_format, lat, lon)
+        popupView.findViewById<MaterialButton>(R.id.btnAddHere).setOnClickListener {
+            mapPopup?.dismiss()
+            startActivity(Intent(this, AddEventActivity::class.java).apply {
+                putExtra(AddEventActivity.EXTRA_LAT, lat)
+                putExtra(AddEventActivity.EXTRA_LON, lon)
+            })
+        }
+
+        // Mesure la bulle pour centrer horizontalement et la placer au-dessus du tap
+        popupView.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val popupW = popupView.measuredWidth
+        val popupH = popupView.measuredHeight
+
+        // Convertit les coordonnées de vue en coordonnées fenêtre
+        val loc = IntArray(2)
+        binding.mapContainer.getLocationInWindow(loc)
+        val winX = loc[0] + viewX.toInt() - popupW / 2
+        val winY = loc[1] + viewY.toInt() - popupH - 12
+
+        mapPopup = PopupWindow(
+            popupView,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isOutsideTouchable = true
+            showAtLocation(binding.root, Gravity.NO_GRAVITY, winX, winY)
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Bubble popup au tap sur un marqueur existant
+    // -------------------------------------------------------------------------
+
+    /**
+     * Affiche une bulle avec le titre de l'événement et un bouton de suppression.
+     * Le bouton est masqué si l'utilisateur courant n'est pas le propriétaire.
+     *
+     * @param viewX / viewY : coordonnées écran du marqueur (depuis la projection osmdroid).
+     */
+    private fun showMarkerPopup(eventId: String, title: String, userId: String, viewX: Float, viewY: Float) {
+        markerPopup?.dismiss()
+        mapPopup?.dismiss()
+
+        val isOwner = FirebaseAuth.getInstance().currentUser?.uid == userId
+
+        val popupView = layoutInflater.inflate(R.layout.popup_marker_click, null)
+        popupView.findViewById<TextView>(R.id.tvMarkerTitle).text = title
+
+        val btnDelete = popupView.findViewById<MaterialButton>(R.id.btnDeleteMarker)
+        if (isOwner) {
+            btnDelete.visibility = View.VISIBLE
+            btnDelete.setOnClickListener {
+                markerPopup?.dismiss()
+                viewModel.deleteEvent(eventId)
+            }
+        } else {
+            btnDelete.visibility = View.GONE
+        }
+
+        popupView.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val popupW = popupView.measuredWidth
+        val popupH = popupView.measuredHeight
+
+        val loc = IntArray(2)
+        binding.mapContainer.getLocationInWindow(loc)
+        val winX = loc[0] + viewX.toInt() - popupW / 2
+        val winY = loc[1] + viewY.toInt() - popupH - 12
+
+        markerPopup = PopupWindow(
+            popupView,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isOutsideTouchable = true
+            showAtLocation(binding.root, Gravity.NO_GRAVITY, winX, winY)
+        }
+    }
+
+    private fun observeDeleteState() {
+        lifecycleScope.launch {
+            viewModel.deleteState.collect { state ->
+                when (state) {
+                    is UiState.Success -> Toast.makeText(
+                        this@MainActivity, R.string.event_deleted, Toast.LENGTH_SHORT
+                    ).show()
+                    is UiState.Error -> Toast.makeText(
+                        this@MainActivity, state.message, Toast.LENGTH_SHORT
+                    ).show()
+                    else -> {}
+                }
+            }
+        }
     }
 
     private fun observeEvents() {
@@ -173,7 +307,7 @@ class MainActivity : AppCompatActivity() {
     private fun displayEvents(events: List<Event>) {
         mapService.clearMarkers()
         events.forEach { event ->
-            mapService.addMarker(event.latitude, event.longitude, event.title)
+            mapService.addMarker(event.latitude, event.longitude, event.title, event.id, event.userId)
         }
     }
 

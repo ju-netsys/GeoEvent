@@ -7,6 +7,7 @@ import fr.itii.geoevent_kotlin.data.repository.EventRepository
 import fr.itii.geoevent_kotlin.ui.common.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
  * Observe la liste d'événements depuis [EventRepository] et expose l'état
  * via [eventsState]. N'importe jamais Firebase directement.
  *
- * @param repository Dépôt injecté via [MapViewModelFactory].
+ * @param repository Dépôt injecté via [fr.itii.geoevent_kotlin.ui.common.ViewModelFactory].
  */
 class MapViewModel(private val repository: EventRepository) : ViewModel() {
 
@@ -28,8 +29,25 @@ class MapViewModel(private val repository: EventRepository) : ViewModel() {
      */
     val eventsState: StateFlow<UiState<List<Event>>> = _eventsState
 
+    private val _deleteState = MutableStateFlow<UiState<Unit>?>(null)
+    /** Flux d'état pour la suppression d'un événement depuis la carte. */
+    val deleteState: StateFlow<UiState<Unit>?> = _deleteState.asStateFlow()
+
     init {
         loadEvents()
+    }
+
+    /**
+     * Supprime un événement par son identifiant Firestore.
+     * Accessible depuis [MainActivity] via la bulle de marqueur.
+     */
+    fun deleteEvent(eventId: String) {
+        viewModelScope.launch {
+            _deleteState.value = UiState.Loading
+            repository.deleteEvent(eventId)
+                .onSuccess { _deleteState.value = UiState.Success(Unit) }
+                .onFailure { e -> _deleteState.value = UiState.Error(e.message ?: "Erreur") }
+        }
     }
 
     /**

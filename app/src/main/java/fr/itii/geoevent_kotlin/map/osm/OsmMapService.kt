@@ -1,7 +1,10 @@
 package fr.itii.geoevent_kotlin.map.osm
 
 import android.content.Context
+import android.view.MotionEvent
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import fr.itii.geoevent_kotlin.R
 import fr.itii.geoevent_kotlin.map.MapService
 import fr.itii.geoevent_kotlin.map.MapState
 import org.osmdroid.config.Configuration
@@ -9,6 +12,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Overlay
 
 /**
  * Implémentation de [MapService] basée sur la bibliothèque osmdroid (OpenStreetMap).
@@ -21,6 +25,8 @@ import org.osmdroid.views.overlay.Marker
 class OsmMapService(private val context: Context) : MapService {
 
     private lateinit var mapView: MapView
+    private var mapClickListener: ((Double, Double, Float, Float) -> Unit)? = null
+    private var markerClickListener: ((String, String, String, Float, Float) -> Unit)? = null
 
     init {
         // osmdroid exige un User-Agent valide pour télécharger les tuiles OSM.
@@ -29,7 +35,7 @@ class OsmMapService(private val context: Context) : MapService {
 
     /**
      * Crée le [MapView], configure les sources de tuiles et l'ajoute dans [container].
-     * Appelé une seule fois depuis [fr.itii.geoevent_kotlin.ui.map.MainActivity.initMap].
+     * Ajoute également un overlay de clic pour détecter les taps sur la carte vide.
      */
     override fun showMap(container: ViewGroup) {
         mapView = MapView(context).apply {
@@ -38,6 +44,18 @@ class OsmMapService(private val context: Context) : MapService {
             controller.setZoom(10.0)
             controller.setCenter(GeoPoint(48.8566, 2.3522)) // Paris par défaut
         }
+
+        // Overlay ajouté en premier : sera traité en dernier dans la chaîne d'événements
+        // (osmdroid traite les overlays en ordre inverse). Les marqueurs ajoutés plus tard
+        // auront la priorité ; ce callback n'est déclenché que sur la carte vide.
+        mapView.overlays.add(object : Overlay() {
+            override fun onSingleTapConfirmed(e: MotionEvent, mapView: MapView): Boolean {
+                val geo = mapView.projection.fromPixels(e.x.toInt(), e.y.toInt())
+                mapClickListener?.invoke(geo.latitude, geo.longitude, e.x, e.y)
+                return true
+            }
+        })
+
         container.removeAllViews()
         container.addView(
             mapView,
@@ -57,13 +75,28 @@ class OsmMapService(private val context: Context) : MapService {
     }
 
     /**
-     * Ajoute un [Marker] osmdroid sur la carte et rafraîchit l'affichage.
+     * Ajoute un [Marker] osmdroid avec l'icône personnalisée [R.drawable.ic_event_marker].
+     * La fenêtre d'info par défaut (qui affichait le "doigt") est désactivée.
+     * Au tap sur le marqueur, [markerClickListener] est déclenché avec l'eventId et userId.
      */
-    override fun addMarker(lat: Double, lon: Double, title: String) {
+    override fun addMarker(lat: Double, lon: Double, title: String, eventId: String, userId: String) {
+        val icon = ContextCompat.getDrawable(context, R.drawable.ic_event_marker)
         val marker = Marker(mapView).apply {
             position = GeoPoint(lat, lon)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             this.title = title
+            this.icon = icon
+            infoWindow = null   // désactive le popup "doigt" par défaut d'osmdroid
+            id = eventId
+            snippet = userId    // snippet stocke userId (non affiché, infoWindow = null)
+        }
+        marker.setOnMarkerClickListener { m, mv ->
+            val point = mv.projection.toPixels(m.position, null)
+            markerClickListener?.invoke(
+                m.id ?: "", m.title ?: "", m.snippet ?: "",
+                point.x.toFloat(), point.y.toFloat()
+            )
+            true
         }
         mapView.overlays.add(marker)
         mapView.invalidate()
@@ -71,10 +104,19 @@ class OsmMapService(private val context: Context) : MapService {
 
     /**
      * Supprime tous les [Marker] des overlays et rafraîchit la vue.
+     * L'overlay de clic (non-Marker) est conservé.
      */
     override fun clearMarkers() {
         mapView.overlays.removeAll { it is Marker }
         mapView.invalidate()
+    }
+
+    override fun setOnMapClickListener(listener: (lat: Double, lon: Double, x: Float, y: Float) -> Unit) {
+        mapClickListener = listener
+    }
+
+    override fun setOnMarkerClickListener(listener: (eventId: String, title: String, userId: String, x: Float, y: Float) -> Unit) {
+        markerClickListener = listener
     }
 
     /** Délègue à [MapView.onResume] pour reprendre le chargement des tuiles. */

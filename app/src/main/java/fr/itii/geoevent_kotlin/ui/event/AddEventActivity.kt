@@ -7,10 +7,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import fr.itii.geoevent_kotlin.R
-import fr.itii.geoevent_kotlin.data.remote.FirestoreDataSource
-import fr.itii.geoevent_kotlin.data.repository.FirestoreEventRepository
 import fr.itii.geoevent_kotlin.databinding.ActivityAddEventBinding
+import fr.itii.geoevent_kotlin.di.ServiceLocator
 import fr.itii.geoevent_kotlin.ui.common.UiState
+import fr.itii.geoevent_kotlin.ui.common.ViewModelFactory
 import kotlinx.coroutines.launch
 
 /**
@@ -25,7 +25,7 @@ class AddEventActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddEventBinding
 
     private val viewModel: EventViewModel by viewModels {
-        EventViewModelFactory(FirestoreEventRepository(FirestoreDataSource()))
+        ViewModelFactory { EventViewModel(ServiceLocator.eventRepository) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +35,14 @@ class AddEventActivity : AppCompatActivity() {
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             title = getString(R.string.add_event_title)
+        }
+
+        // Pré-remplissage depuis la bulle de la carte
+        intent.getDoubleExtra(EXTRA_LAT, Double.NaN).takeIf { !it.isNaN() }?.let {
+            binding.etLatitude.setText(it.toString())
+        }
+        intent.getDoubleExtra(EXTRA_LON, Double.NaN).takeIf { !it.isNaN() }?.let {
+            binding.etLongitude.setText(it.toString())
         }
 
         binding.btnSave.setOnClickListener {
@@ -101,5 +109,10 @@ class AddEventActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         finish()
         return true
+    }
+
+    companion object {
+        const val EXTRA_LAT = "extra_lat"
+        const val EXTRA_LON = "extra_lon"
     }
 }

@@ -1,7 +1,37 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.GeoEventKotlin" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+
+    <!-- Thème sombre GeoEvent — même palette violette, tons sombres -->
+    <style name="Base.Theme.GeoEventKotlin" parent="Theme.Material3.Dark.NoActionBar">
+
+        <!-- Couleurs primaires (variante sombre) -->
+        <item name="colorPrimary">@color/md_primary_dark</item>
+        <item name="colorOnPrimary">@color/md_on_primary_dark</item>
+        <item name="colorPrimaryContainer">@color/md_primary_container_dark</item>
+        <item name="colorOnPrimaryContainer">@color/md_on_primary_container_dark</item>
+
+        <!-- Couleurs secondaires (variante sombre) -->
+        <item name="colorSecondary">@color/md_secondary_dark</item>
+        <item name="colorOnSecondary">@color/md_on_secondary_dark</item>
+
+        <!-- Surfaces et fonds sombres -->
+        <item name="android:colorBackground">@color/md_background_dark</item>
+        <item name="colorSurface">@color/md_surface_dark</item>
+        <item name="colorOnSurface">@color/md_on_surface_dark</item>
+        <item name="colorSurfaceVariant">@color/md_surface_variant_dark</item>
+        <item name="colorOnSurfaceVariant">@color/md_on_surface_variant_dark</item>
+
+        <!-- Erreur -->
+        <item name="colorError">@color/md_error</item>
+        <item name="colorOnError">@color/md_on_error</item>
+
+        <!-- Arrondis et styles : identiques au thème clair -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.GeoEvent.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.GeoEvent.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.GeoEvent.Large</item>
+        <item name="materialButtonStyle">@style/Widget.GeoEvent.Button</item>
+        <item name="textInputStyle">@style/Widget.GeoEvent.TextInputLayout</item>
+        <item name="materialCardViewStyle">@style/Widget.GeoEvent.CardView</item>
+        <item name="toolbarStyle">@style/Widget.GeoEvent.Toolbar</item>
     </style>
+
 </resources>

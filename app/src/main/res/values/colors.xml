@@ -1,5 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- === Palette de marque GeoEvent — violet doux (Material 3) === -->
+
+    <!-- Primaire -->
+    <color name="md_primary">#7C57C9</color>
+    <color name="md_on_primary">#FFFFFF</color>
+    <color name="md_primary_container">#EDE7F6</color>
+    <color name="md_on_primary_container">#21005D</color>
+
+    <!-- Secondaire -->
+    <color name="md_secondary">#9E7FD4</color>
+    <color name="md_on_secondary">#FFFFFF</color>
+    <color name="md_secondary_container">#F3EEFF</color>
+    <color name="md_on_secondary_container">#35006E</color>
+
+    <!-- Fond &amp; surfaces (thème clair) -->
+    <color name="md_background">#F9F4FF</color>
+    <color name="md_on_background">#1C1B1F</color>
+    <color name="md_surface">#FFFFFF</color>
+    <color name="md_on_surface">#1C1B1F</color>
+    <color name="md_surface_variant">#EDE7F6</color>
+    <color name="md_on_surface_variant">#49454F</color>
+    <color name="md_outline">#CAC4D0</color>
+    <color name="md_outline_variant">#E7E0EC</color>
+
+    <!-- Erreur -->
+    <color name="md_error">#B00020</color>
+    <color name="md_on_error">#FFFFFF</color>
+    <color name="md_error_container">#FFDAD6</color>
+    <color name="md_on_error_container">#410002</color>
+
+    <!-- Thème sombre -->
+    <color name="md_primary_dark">#CEB4FF</color>
+    <color name="md_on_primary_dark">#380066</color>
+    <color name="md_primary_container_dark">#5422A5</color>
+    <color name="md_on_primary_container_dark">#EDE7F6</color>
+    <color name="md_secondary_dark">#CBBDFF</color>
+    <color name="md_on_secondary_dark">#2B006D</color>
+    <color name="md_background_dark">#1C1B1F</color>
+    <color name="md_on_background_dark">#E6E1E5</color>
+    <color name="md_surface_dark">#2B2930</color>
+    <color name="md_on_surface_dark">#E6E1E5</color>
+    <color name="md_surface_variant_dark">#49454F</color>
+    <color name="md_on_surface_variant_dark">#CAC4D0</color>
+
+    <!-- Héritage requis par Android -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
 </resources>
