@@ -1,6 +1,7 @@
 package fr.itii.geoevent_kotlin.data.remote
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import fr.itii.geoevent_kotlin.data.model.Event
 import kotlinx.coroutines.channels.awaitClose
@@ -30,7 +31,14 @@ class FirestoreDataSource {
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    // PERMISSION_DENIED = l'utilisateur vient de se déconnecter.
+                    // On ferme le Flow proprement (sans exception) plutôt que de
+                    // propager une erreur qui déclencherait un Toast intempestif.
+                    if (error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        close()
+                    } else {
+                        close(error)
+                    }
                     return@addSnapshotListener
                 }
                 val events = snapshot?.toObjects(Event::class.java) ?: emptyList()
