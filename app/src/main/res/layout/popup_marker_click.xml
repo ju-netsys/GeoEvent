@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bulle affichée au tap sur un marqueur existant — titre + bouton suppression -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:minWidth="220dp"
     app:cardCornerRadius="20dp"
     app:cardElevation="10dp"
     app:strokeWidth="0dp"
@@ -13,41 +13,88 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="14dp"
-        android:paddingEnd="6dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:minWidth="220dp"
+        android:maxWidth="280dp"
+        android:orientation="vertical"
+        android:padding="14dp">
 
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/ic_location"
-            android:contentDescription="@null"
-            app:tint="?attr/colorPrimary" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_location"
+                android:contentDescription="@null"
+                app:tint="?attr/colorPrimary" />
+
+            <TextView
+                android:id="@+id/tvMarkerTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textColor="?attr/colorOnSurface" />
+
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/tvMarkerTitle"
-            android:layout_width="wrap_content"
+            android:id="@+id/tvMarkerDescription"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:maxWidth="180dp"
+            android:layout_marginTop="6dp"
+            android:textSize="12sp"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvMarkerAuthor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="11sp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textColor="?attr/colorOnSurface" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDeleteMarker"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:contentDescription="@string/delete"
-            app:icon="@drawable/ic_delete"
-            app:iconTint="?attr/colorError" />
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="4dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditMarker"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/edit_event"
+                app:icon="@drawable/ic_edit"
+                app:iconTint="?attr/colorPrimary"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeleteMarker"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/delete"
+                app:icon="@drawable/ic_delete"
+                app:iconTint="?attr/colorError"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
