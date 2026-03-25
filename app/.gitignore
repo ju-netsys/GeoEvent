@@ -1,1 +1,4 @@
 /build
+
+# Firebase — ne jamais committer les credentials
+google-services.json
