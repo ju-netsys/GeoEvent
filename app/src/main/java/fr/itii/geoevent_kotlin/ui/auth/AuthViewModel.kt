@@ -20,13 +20,14 @@ class AuthViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
 
-    private val _authState = MutableStateFlow<UiState<Unit>>(UiState.Loading)
+    private val _authState = MutableStateFlow<UiState<Unit>?>(null)
 
     /**
      * Flux d'état exposé aux activités.
+     * `null` = état initial (aucune action en cours).
      * Émet [UiState.Loading] pendant la requête, [UiState.Success] ou [UiState.Error].
      */
-    val authState: StateFlow<UiState<Unit>> = _authState
+    val authState: StateFlow<UiState<Unit>?> = _authState
 
     /** Vrai si un utilisateur Firebase est déjà connecté. */
     val isLoggedIn: Boolean get() = auth.currentUser != null
