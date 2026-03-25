@@ -38,10 +38,21 @@
             android:ellipsize="end" />
 
         <TextView
+            android:id="@+id/tvAuthor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="11sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/tvCoordinates"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:textSize="11sp"
             android:fontFamily="monospace"
             android:textColor="?attr/colorOnSurfaceVariant" />

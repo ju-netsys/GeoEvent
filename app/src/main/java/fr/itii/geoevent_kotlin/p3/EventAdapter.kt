@@ -1,6 +1,7 @@
 package fr.itii.geoevent_kotlin.p3
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import fr.itii.geoevent_kotlin.R
@@ -37,6 +38,12 @@ class EventAdapter(
             binding.tvTitle.text = event.title
             binding.tvDescription.text = event.description.ifEmpty {
                 binding.root.context.getString(R.string.no_description)
+            }
+            if (event.authorEmail.isNotEmpty()) {
+                binding.tvAuthor.text = "${binding.root.context.getString(R.string.author)} : ${event.authorEmail}"
+                binding.tvAuthor.visibility = View.VISIBLE
+            } else {
+                binding.tvAuthor.visibility = View.GONE
             }
             binding.tvCoordinates.text = String.format("%.5f, %.5f", event.latitude, event.longitude)
             binding.root.setOnClickListener { onEventClick(event) }
