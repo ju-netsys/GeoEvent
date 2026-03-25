@@ -55,4 +55,25 @@
     <string name="error_title_required">Le titre est requis</string>
     <string name="error_invalid_latitude">Latitude invalide (−90 à 90)</string>
     <string name="error_invalid_longitude">Longitude invalide (−180 à 180)</string>
+    <string name="error_password_policy">Le mot de passe ne respecte pas les exigences</string>
+
+    <!-- Politique de mot de passe -->
+    <string name="req_length">8 caractères minimum</string>
+    <string name="req_uppercase">1 majuscule</string>
+    <string name="req_lowercase">1 minuscule</string>
+    <string name="req_digit">1 chiffre</string>
+    <string name="req_special">1 caractère spécial</string>
+
+    <!-- Édition d'événement -->
+    <string name="edit_event_title">Modifier l\'événement</string>
+    <string name="save_changes">Enregistrer</string>
+    <string name="event_updated">Événement mis à jour</string>
+    <string name="edit_event">Modifier</string>
+
+    <!-- Navigation principale -->
+    <string name="tab_map">Carte</string>
+    <string name="tab_list">Liste</string>
+
+    <!-- Bulle marqueur -->
+    <string name="author">Par</string>
 </resources>

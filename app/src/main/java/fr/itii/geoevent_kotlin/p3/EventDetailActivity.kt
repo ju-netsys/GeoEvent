@@ -1,4 +1,4 @@
-package fr.itii.geoevent_kotlin.ui.event
+package fr.itii.geoevent_kotlin.p3
 
 import android.os.Bundle
 import android.view.View
@@ -9,28 +9,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import fr.itii.geoevent_kotlin.R
-import fr.itii.geoevent_kotlin.data.model.Event
+import fr.itii.geoevent_kotlin.common.UiState
+import fr.itii.geoevent_kotlin.common.ViewModelFactory
 import fr.itii.geoevent_kotlin.databinding.ActivityEventDetailBinding
-import fr.itii.geoevent_kotlin.di.ServiceLocator
-import fr.itii.geoevent_kotlin.ui.common.UiState
-import fr.itii.geoevent_kotlin.ui.common.ViewModelFactory
+import fr.itii.geoevent_kotlin.p1.Event
+import fr.itii.geoevent_kotlin.p1.ServiceLocator
 import kotlinx.coroutines.launch
 
-/**
- * Écran de détail d'un événement.
- *
- * Reçoit un objet [Event] via [EXTRA_EVENT] (Parcelable).
- * Le bouton de suppression n'est visible que pour l'auteur de l'événement.
- */
 class EventDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityEventDetailBinding
+    private var event: Event? = null
 
     private val viewModel: EventViewModel by viewModels {
         ViewModelFactory { EventViewModel(ServiceLocator.eventRepository) }
     }
-
-    private var event: Event? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,17 +33,15 @@ class EventDetailActivity : AppCompatActivity() {
 
         @Suppress("DEPRECATION")
         event = intent.getParcelableExtra(EXTRA_EVENT)
-        event?.let { displayEvent(it) }
+        if (event != null) {
+            displayEvent(event!!)
+        }
 
         binding.btnDelete.setOnClickListener { confirmDelete() }
 
         observeDeleteState()
     }
 
-    /**
-     * Affiche les données de l'événement et masque le bouton supprimer
-     * si l'utilisateur courant n'est pas le propriétaire.
-     */
     private fun displayEvent(event: Event) {
         supportActionBar?.title = event.title
         binding.tvTitle.text = event.title
@@ -58,7 +49,11 @@ class EventDetailActivity : AppCompatActivity() {
         binding.tvCoordinates.text = getString(R.string.coordinates_format, event.latitude, event.longitude)
 
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-        binding.btnDelete.visibility = if (event.userId == currentUserId) View.VISIBLE else View.GONE
+        if (event.userId == currentUserId) {
+            binding.btnDelete.visibility = View.VISIBLE
+        } else {
+            binding.btnDelete.visibility = View.GONE
+        }
     }
 
     private fun confirmDelete() {
@@ -66,7 +61,10 @@ class EventDetailActivity : AppCompatActivity() {
             .setTitle(R.string.delete_event_title)
             .setMessage(R.string.delete_event_confirm)
             .setPositiveButton(R.string.delete) { _, _ ->
-                event?.id?.let { viewModel.deleteEvent(it) }
+                val eventId = event?.id
+                if (eventId != null) {
+                    viewModel.deleteEvent(eventId)
+                }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -86,7 +84,7 @@ class EventDetailActivity : AppCompatActivity() {
                         binding.progressBar.visibility = View.GONE
                         Toast.makeText(this@EventDetailActivity, state.message, Toast.LENGTH_LONG).show()
                     }
-                    null -> { /* État initial */ }
+                    null -> {}
                 }
             }
         }
@@ -98,7 +96,6 @@ class EventDetailActivity : AppCompatActivity() {
     }
 
     companion object {
-        /** Clé Intent pour passer un objet [Event] Parcelable. */
         const val EXTRA_EVENT = "extra_event"
     }
 }

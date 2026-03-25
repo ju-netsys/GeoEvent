@@ -1,4 +1,4 @@
-package fr.itii.geoevent_kotlin.ui.map
+package fr.itii.geoevent_kotlin.p3
 
 import android.Manifest
 import android.content.Intent
@@ -22,6 +22,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -31,80 +32,43 @@ import com.google.android.gms.location.Priority
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import fr.itii.geoevent_kotlin.R
-import fr.itii.geoevent_kotlin.data.model.Event
+import fr.itii.geoevent_kotlin.common.UiState
+import fr.itii.geoevent_kotlin.common.ViewModelFactory
 import fr.itii.geoevent_kotlin.databinding.ActivityMainBinding
-import fr.itii.geoevent_kotlin.di.ServiceLocator
-import fr.itii.geoevent_kotlin.map.MapService
-import fr.itii.geoevent_kotlin.map.MapState
-import fr.itii.geoevent_kotlin.map.osm.OsmMapService
-import fr.itii.geoevent_kotlin.ui.auth.LoginActivity
-import fr.itii.geoevent_kotlin.ui.common.UiState
-import fr.itii.geoevent_kotlin.ui.common.ViewModelFactory
-import fr.itii.geoevent_kotlin.ui.event.AddEventActivity
+import fr.itii.geoevent_kotlin.p1.Event
+import fr.itii.geoevent_kotlin.p1.ServiceLocator
+import fr.itii.geoevent_kotlin.p2.LoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * Activité principale de l'application : affiche la carte OSM,
- * gère les permissions de localisation et affiche les événements Firestore.
- *
- * Architecture MVVM :
- * - [MapViewModel] expose [UiState] via [kotlinx.coroutines.flow.StateFlow]
- * - [MapService] (interface) masque toute dépendance envers osmdroid
- * - [FusedLocationProviderClient] fournit la position GPS
- *
- * Cycle de vie :
- * - onResume  : reprend la carte OSM + relance les MAJ GPS
- * - onPause   : suspend la carte OSM + arrête les MAJ GPS
- * - onSaveInstanceState : sauvegarde centre/zoom de la carte
- */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var mapService: MapService
     private lateinit var fusedClient: FusedLocationProviderClient
+    private lateinit var eventAdapter: EventAdapter
     private var mapPopup: PopupWindow? = null
     private var markerPopup: PopupWindow? = null
+    private var currentEvents: List<Event> = emptyList()
+    private var hasCenteredOnUser = false
+    private var savedMapState: MapState? = null
 
     private val viewModel: MapViewModel by viewModels {
         ViewModelFactory { MapViewModel(ServiceLocator.eventRepository) }
     }
 
-    private var savedMapState: MapState? = null
-
-    /**
-     * Vrai dès que la carte a été centrée une première fois sur la position GPS.
-     * Évite que chaque mise à jour GPS (toutes les 5s) recentre la carte pendant
-     * que l'utilisateur navigue.
-     * Remis à false dans [onPause] pour recentrer à la prochaine ouverture.
-     */
-    private var hasCenteredOnUser = false
-
-    // -------------------------------------------------------------------------
-    // Callback GPS
-    // -------------------------------------------------------------------------
-
-    /**
-     * Reçoit les mises à jour de position.
-     * Ne centre la carte que lors du **premier** fix GPS de la session.
-     */
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
-            result.lastLocation?.let { location ->
-                if (!hasCenteredOnUser) {
-                    mapService.centerOn(location.latitude, location.longitude)
-                    hasCenteredOnUser = true
-                }
+            val location = result.lastLocation ?: return
+            if (!hasCenteredOnUser) {
+                mapService.centerOn(location.latitude, location.longitude)
+                hasCenteredOnUser = true
             }
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Permissions
-    // -------------------------------------------------------------------------
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -120,10 +84,6 @@ class MainActivity : AppCompatActivity() {
             else -> showPermissionSettings()
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Lifecycle
-    // -------------------------------------------------------------------------
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -149,6 +109,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         initMap()
+        initRecyclerView()
+        initBottomNav()
         observeEvents()
         observeDeleteState()
         initSearch()
@@ -167,21 +129,46 @@ class MainActivity : AppCompatActivity() {
             showMapPopup(lat, lon, viewX, viewY)
         }
 
-        mapService.setOnMarkerClickListener { eventId, title, userId, viewX, viewY ->
-            showMarkerPopup(eventId, title, userId, viewX, viewY)
+        mapService.setOnMarkerClickListener { eventId, title, description, authorEmail, userId, viewX, viewY ->
+            showMarkerPopup(eventId, title, description, authorEmail, userId, viewX, viewY)
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Bubble popup au tap sur la carte
-    // -------------------------------------------------------------------------
+    private fun initRecyclerView() {
+        eventAdapter = EventAdapter { event ->
+            binding.bottomNav.selectedItemId = R.id.nav_map
+            mapService.centerOn(event.latitude, event.longitude, 15.0)
+        }
+        binding.rvEvents.layoutManager = LinearLayoutManager(this)
+        binding.rvEvents.adapter = eventAdapter
+    }
 
-    /**
-     * Affiche une bulle contextuelle avec les coordonnées du tap
-     * et un bouton "+" pour créer un événement à cet endroit.
-     *
-     * @param viewX / viewY : coordonnées relatives à la vue carte.
-     */
+    private fun initBottomNav() {
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_map -> {
+                    binding.mapContainer.visibility = View.VISIBLE
+                    binding.searchCard.visibility = View.VISIBLE
+                    binding.fabAddEvent.visibility = View.VISIBLE
+                    binding.rvEvents.visibility = View.GONE
+                    markerPopup?.dismiss()
+                    mapPopup?.dismiss()
+                    true
+                }
+                R.id.nav_list -> {
+                    binding.mapContainer.visibility = View.GONE
+                    binding.searchCard.visibility = View.GONE
+                    binding.fabAddEvent.visibility = View.GONE
+                    binding.rvEvents.visibility = View.VISIBLE
+                    markerPopup?.dismiss()
+                    mapPopup?.dismiss()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
     private fun showMapPopup(lat: Double, lon: Double, viewX: Float, viewY: Float) {
         mapPopup?.dismiss()
 
@@ -196,7 +183,6 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
-        // Mesure la bulle pour centrer horizontalement et la placer au-dessus du tap
         popupView.measure(
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
@@ -204,7 +190,6 @@ class MainActivity : AppCompatActivity() {
         val popupW = popupView.measuredWidth
         val popupH = popupView.measuredHeight
 
-        // Convertit les coordonnées de vue en coordonnées fenêtre
         val loc = IntArray(2)
         binding.mapContainer.getLocationInWindow(loc)
         val winX = loc[0] + viewX.toInt() - popupW / 2
@@ -221,17 +206,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Bubble popup au tap sur un marqueur existant
-    // -------------------------------------------------------------------------
-
-    /**
-     * Affiche une bulle avec le titre de l'événement et un bouton de suppression.
-     * Le bouton est masqué si l'utilisateur courant n'est pas le propriétaire.
-     *
-     * @param viewX / viewY : coordonnées écran du marqueur (depuis la projection osmdroid).
-     */
-    private fun showMarkerPopup(eventId: String, title: String, userId: String, viewX: Float, viewY: Float) {
+    private fun showMarkerPopup(
+        eventId: String,
+        title: String,
+        description: String,
+        authorEmail: String,
+        userId: String,
+        viewX: Float,
+        viewY: Float
+    ) {
         markerPopup?.dismiss()
         mapPopup?.dismiss()
 
@@ -240,15 +223,38 @@ class MainActivity : AppCompatActivity() {
         val popupView = layoutInflater.inflate(R.layout.popup_marker_click, null)
         popupView.findViewById<TextView>(R.id.tvMarkerTitle).text = title
 
+        val tvDescription = popupView.findViewById<TextView>(R.id.tvMarkerDescription)
+        if (description.isNotEmpty()) {
+            tvDescription.text = description
+            tvDescription.visibility = View.VISIBLE
+        }
+
+        val tvAuthor = popupView.findViewById<TextView>(R.id.tvMarkerAuthor)
+        if (authorEmail.isNotEmpty()) {
+            tvAuthor.text = "${getString(R.string.author)} : $authorEmail"
+            tvAuthor.visibility = View.VISIBLE
+        }
+
+        val btnEdit = popupView.findViewById<MaterialButton>(R.id.btnEditMarker)
         val btnDelete = popupView.findViewById<MaterialButton>(R.id.btnDeleteMarker)
+
         if (isOwner) {
+            btnEdit.visibility = View.VISIBLE
+            btnEdit.setOnClickListener {
+                markerPopup?.dismiss()
+                val event = currentEvents.find { it.id == eventId }
+                if (event != null) {
+                    startActivity(Intent(this, AddEventActivity::class.java).apply {
+                        putExtra(AddEventActivity.EXTRA_EVENT, event)
+                    })
+                }
+            }
+
             btnDelete.visibility = View.VISIBLE
             btnDelete.setOnClickListener {
                 markerPopup?.dismiss()
                 viewModel.deleteEvent(eventId)
             }
-        } else {
-            btnDelete.visibility = View.GONE
         }
 
         popupView.measure(
@@ -305,10 +311,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun displayEvents(events: List<Event>) {
+        currentEvents = events
         mapService.clearMarkers()
         events.forEach { event ->
-            mapService.addMarker(event.latitude, event.longitude, event.title, event.id, event.userId)
+            mapService.addMarker(
+                event.latitude,
+                event.longitude,
+                event.title,
+                event.description,
+                event.authorEmail,
+                event.id,
+                event.userId
+            )
         }
+        eventAdapter.submitList(events)
     }
 
     override fun onResume() {
@@ -321,7 +337,6 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         mapService.onPause()
         stopLocationUpdates()
-        // Permet de recentrer à la prochaine reprise
         hasCenteredOnUser = false
     }
 
@@ -332,10 +347,6 @@ class MainActivity : AppCompatActivity() {
         outState.putDouble(KEY_LON, state.longitude)
         outState.putDouble(KEY_ZOOM, state.zoom)
     }
-
-    // -------------------------------------------------------------------------
-    // GPS
-    // -------------------------------------------------------------------------
 
     private fun checkAndRequestLocationPermission() {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -365,14 +376,6 @@ class MainActivity : AppCompatActivity() {
         fusedClient.removeLocationUpdates(locationCallback)
     }
 
-    // -------------------------------------------------------------------------
-    // Recherche de lieux (Nominatim / OpenStreetMap)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Configure la barre de recherche.
-     * Déclenche [searchPlace] au clic sur le bouton ou à l'action "Search" du clavier.
-     */
     private fun initSearch() {
         binding.btnSearch.setOnClickListener {
             val query = binding.etSearch.text.toString().trim()
@@ -388,15 +391,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Géocode un code postal via l'API zippopotam.us et centre la carte sur le résultat.
-     *
-     * Format accepté :
-     * - "75001"       → pays par défaut : France (fr)
-     * - "us/10001"    → pays explicite avant le "/"
-     *
-     * L'appel réseau s'effectue sur [Dispatchers.IO] pour ne pas bloquer le main thread.
-     */
     private fun searchPlace(query: String) {
         hideKeyboard()
         lifecycleScope.launch {
@@ -446,10 +440,6 @@ class MainActivity : AppCompatActivity() {
         imm.hideSoftInputFromWindow(binding.etSearch.windowToken, 0)
     }
 
-    // -------------------------------------------------------------------------
-    // Dialogs permission
-    // -------------------------------------------------------------------------
-
     private fun showPermissionRationale() {
         AlertDialog.Builder(this)
             .setTitle(R.string.permission_required_title)
@@ -480,10 +470,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
-
-    // -------------------------------------------------------------------------
-    // Menu
-    // -------------------------------------------------------------------------
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)

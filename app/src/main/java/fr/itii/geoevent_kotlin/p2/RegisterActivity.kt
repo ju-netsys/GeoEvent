@@ -1,24 +1,22 @@
-package fr.itii.geoevent_kotlin.ui.auth
+package fr.itii.geoevent_kotlin.p2
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import fr.itii.geoevent_kotlin.R
+import fr.itii.geoevent_kotlin.common.UiState
 import fr.itii.geoevent_kotlin.databinding.ActivityRegisterBinding
-import fr.itii.geoevent_kotlin.ui.common.UiState
-import fr.itii.geoevent_kotlin.ui.map.MainActivity
+import fr.itii.geoevent_kotlin.p3.MainActivity
 import kotlinx.coroutines.launch
 
-/**
- * Écran d'inscription.
- *
- * Valide email, mot de passe (≥ 6 caractères) et confirmation
- * avant d'appeler [AuthViewModel.register].
- */
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
@@ -28,6 +26,14 @@ class RegisterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                updatePasswordStrengthIndicators(s?.toString() ?: "")
+            }
+        })
 
         binding.btnRegister.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
@@ -41,6 +47,31 @@ class RegisterActivity : AppCompatActivity() {
         binding.tvLogin.setOnClickListener { finish() }
 
         observeAuthState()
+    }
+
+    private fun updatePasswordStrengthIndicators(password: String) {
+        setIndicator(binding.tvReqLength, password.length >= 8)
+        setIndicator(binding.tvReqUpper, password.any { it.isUpperCase() })
+        setIndicator(binding.tvReqLower, password.any { it.isLowerCase() })
+        setIndicator(binding.tvReqDigit, password.any { it.isDigit() })
+        setIndicator(binding.tvReqSpecial, password.any { !it.isLetterOrDigit() })
+    }
+
+    private fun setIndicator(view: TextView, satisfied: Boolean) {
+        if (satisfied) {
+            view.setTextColor(Color.parseColor("#2E7D32"))
+        } else {
+            view.setTextColor(Color.parseColor("#C62828"))
+        }
+    }
+
+    private fun isPasswordValid(password: String): Boolean {
+        if (password.length < 8) return false
+        if (!password.any { it.isUpperCase() }) return false
+        if (!password.any { it.isLowerCase() }) return false
+        if (!password.any { it.isDigit() }) return false
+        if (!password.any { !it.isLetterOrDigit() }) return false
+        return true
     }
 
     private fun observeAuthState() {
@@ -57,7 +88,7 @@ class RegisterActivity : AppCompatActivity() {
                         setLoading(false)
                         Toast.makeText(this@RegisterActivity, state.message, Toast.LENGTH_LONG).show()
                     }
-                    null -> setLoading(false) // État initial : rien en cours
+                    null -> setLoading(false)
                 }
             }
         }
@@ -74,17 +105,23 @@ class RegisterActivity : AppCompatActivity() {
         if (email.isEmpty()) {
             binding.tilEmail.error = getString(R.string.error_email_required)
             valid = false
-        } else binding.tilEmail.error = null
+        } else {
+            binding.tilEmail.error = null
+        }
 
-        if (password.length < 6) {
-            binding.tilPassword.error = getString(R.string.error_password_too_short)
+        if (!isPasswordValid(password)) {
+            binding.tilPassword.error = getString(R.string.error_password_policy)
             valid = false
-        } else binding.tilPassword.error = null
+        } else {
+            binding.tilPassword.error = null
+        }
 
         if (password != confirm) {
             binding.tilConfirmPassword.error = getString(R.string.error_passwords_not_match)
             valid = false
-        } else binding.tilConfirmPassword.error = null
+        } else {
+            binding.tilConfirmPassword.error = null
+        }
 
         return valid
     }

@@ -17,9 +17,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GeoEventKotlin">
 
-        <!-- Activité principale : carte des événements -->
+        <!-- Activité principale : carte des événements (P3) -->
         <activity
-            android:name=".ui.map.MainActivity"
+            android:name=".p3.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,13 +27,13 @@
             </intent-filter>
         </activity>
 
-        <!-- Authentification -->
-        <activity android:name=".ui.auth.LoginActivity" android:exported="false" />
-        <activity android:name=".ui.auth.RegisterActivity" android:exported="false" />
+        <!-- Authentification (P2) -->
+        <activity android:name=".p2.LoginActivity" android:exported="false" />
+        <activity android:name=".p2.RegisterActivity" android:exported="false" />
 
-        <!-- Gestion des événements -->
-        <activity android:name=".ui.event.AddEventActivity" android:exported="false" />
-        <activity android:name=".ui.event.EventDetailActivity" android:exported="false" />
+        <!-- Gestion des événements (P3) -->
+        <activity android:name=".p3.AddEventActivity" android:exported="false" />
+        <activity android:name=".p3.EventDetailActivity" android:exported="false" />
 
     </application>
 
