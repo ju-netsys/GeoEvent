@@ -1,3 +1,47 @@
 <resources>
-    <string name="app_name">GeoEvent-Kotlin</string>
+    <string name="app_name">GeoEvent</string>
+
+    <!-- Auth -->
+    <string name="email">Email</string>
+    <string name="password">Mot de passe</string>
+    <string name="confirm_password">Confirmer le mot de passe</string>
+    <string name="login">Se connecter</string>
+    <string name="register">S\'inscrire</string>
+    <string name="register_title">Créer un compte</string>
+    <string name="no_account_register">Pas de compte ? S\'inscrire</string>
+    <string name="already_account_login">Déjà un compte ? Se connecter</string>
+    <string name="logout">Se déconnecter</string>
+
+    <!-- Permissions -->
+    <string name="permission_required_title">Permission requise</string>
+    <string name="permission_required_message">La géolocalisation est nécessaire pour centrer la carte sur votre position.</string>
+    <string name="permission_settings_message">La permission de localisation a été refusée définitivement. Veuillez l\'activer dans les paramètres de l\'application.</string>
+    <string name="grant">Accorder</string>
+    <string name="cancel">Annuler</string>
+    <string name="settings">Paramètres</string>
+
+    <!-- Events -->
+    <string name="add_event">Ajouter un événement</string>
+    <string name="add_event_title">Nouvel événement</string>
+    <string name="event_title">Titre de l\'événement</string>
+    <string name="event_description">Description</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="save">Enregistrer</string>
+    <string name="event_added">Événement ajouté avec succès</string>
+    <string name="event_deleted">Événement supprimé</string>
+    <string name="no_description">Aucune description</string>
+    <string name="coordinates_format">Lat : %1$.4f, Lon : %2$.4f</string>
+    <string name="delete_event_title">Supprimer l\'événement</string>
+    <string name="delete_event_confirm">Voulez-vous vraiment supprimer cet événement ?</string>
+    <string name="delete">Supprimer</string>
+
+    <!-- Errors -->
+    <string name="error_email_required">L\'email est requis</string>
+    <string name="error_password_required">Le mot de passe est requis</string>
+    <string name="error_password_too_short">Le mot de passe doit faire au moins 6 caractères</string>
+    <string name="error_passwords_not_match">Les mots de passe ne correspondent pas</string>
+    <string name="error_title_required">Le titre est requis</string>
+    <string name="error_invalid_latitude">Latitude invalide (−90 à 90)</string>
+    <string name="error_invalid_longitude">Longitude invalide (−180 à 180)</string>
 </resources>

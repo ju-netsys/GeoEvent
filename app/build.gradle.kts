@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -11,8 +13,8 @@ android {
 
     defaultConfig {
         applicationId = "fr.itii.geoevent_kotlin"
-        minSdk = 36
-        targetSdk = 36
+        minSdk = 24
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -28,6 +30,11 @@ android {
             )
         }
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -43,6 +50,26 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+
+    // OSMDroid
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // Firebase (BOM manages versions)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+
+    // Google Play Services — localisation GPS
+    implementation(libs.play.services.location)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    // Lifecycle / ViewModel
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.lifecycle.runtime.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
